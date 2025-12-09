@@ -1,0 +1,23 @@
+
+export subscriptionId="b1f76605-53fb-4dd3-818e-8355d7ba867b";
+export resourceGroup="RG-SYSLOG-SERVER";
+export tenantId="75f2a99b-01fd-48f2-ac60-d4a7a44fd0cc";
+export location="eastus2";
+export authType="token";
+export correlationId="4c9c2686-940e-4902-8f04-63b6c7a9f8e5";
+export cloud="AzureCloud";
+
+
+# Download the installation package
+LINUX_INSTALL_SCRIPT="/tmp/install_linux_azcmagent.sh"
+if [ -f "$LINUX_INSTALL_SCRIPT" ]; then rm -f "$LINUX_INSTALL_SCRIPT"; fi;
+output=$(wget https://gbl.his.arc.azure.com/azcmagent-linux -O "$LINUX_INSTALL_SCRIPT" 2>&1);
+if [ $? != 0 ]; then wget -qO- --method=PUT --body-data="{\"subscriptionId\":\"$subscriptionId\",\"resourceGroup\":\"$resourceGroup\",\"tenantId\":\"$tenantId\",\"location\":\"$location\",\"correlationId\":\"$correlationId\",\"authType\":\"$authType\",\"operation\":\"onboarding\",\"messageType\":\"DownloadScriptFailed\",\"message\":\"$output\"}" "https://gbl.his.arc.azure.com/log" &> /dev/null || true; fi;
+echo "$output";
+
+# Install the hybrid agent
+bash "$LINUX_INSTALL_SCRIPT";
+sleep 5;
+
+# Run connect command
+sudo azcmagent connect --resource-group "$resourceGroup" --tenant-id "$tenantId" --location "$location" --subscription-id "$subscriptionId" --cloud "$cloud" --correlation-id "$correlationId";
